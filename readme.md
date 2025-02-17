@@ -2,7 +2,7 @@
 
 ---
 
-**Interpret aritmetických výrazů**. Tyto výrazy obsahují operátory `+, -, \*, /` (s běžnými prioritami a levou asociativitou) a závorky.
+**Interpret aritmetických výrazů**. Tyto výrazy obsahují operátory `+, -, *, /` (s běžnými prioritami a levou asociativitou) a závorky.
 
 Pro zjednodušení úlohy uvažujeme **pouze binární operátory**. V našem jazyce nejsou žádné unární operátory. Navíc můžeme používat **pouze kladná celá čísla** ve výrazech.
 
@@ -20,8 +20,8 @@ Pro každý výraz vypište jeden řádek obsahující výsledek – vypočtenou
 
 ```
 2
-2 \* (3+5)
-15 - 2\*\*7
+2 * (3+5)
+15 - 2**7
 ```
 
 **výstup:**
