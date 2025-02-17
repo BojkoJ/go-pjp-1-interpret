@@ -12,7 +12,7 @@ První řádek vstupu obsahuje číslo `N`. Určuje počet výrazů, které má 
 
 ### Specifikace výstupu
 
-Pro každý výraz vypište jeden řádek obsahující výsledek – vypočtenou hodnotu výrazu. Pokud je ve vstupu jakákoliv chyba, vypište text `ERROR`.
+Pro každý výraz se vypíše jeden řádek obsahující výsledek – vypočtenou hodnotu výrazu. Pokud je ve vstupu jakákoliv chyba, vypíše se text `ERROR`.
 
 ### Příklad:
 
