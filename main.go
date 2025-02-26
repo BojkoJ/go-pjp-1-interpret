@@ -165,7 +165,7 @@ func (p *Parser) parseFactor() (int, error) {
 		value, _ := strconv.Atoi(p.token.Value) // Převedeme ho na číslo (je to typ string)
 		p.eat(NUMBER)                           // Ověříme, že je to číslo a posuneme se na další token
 
-		// Zkontrolujeme, jestli po čísle nenásleduje závorka bez operátoru (jako v 2+5*7(2+5))
+		// Zkontrolujeme, jestli po čísle nenásleduje závorka bez operátoru (jako v např:  7(2+5))
 		if p.token.Type == LPAREN {
 			return 0, fmt.Errorf("missing operator before parenthesis")
 		}
@@ -300,6 +300,8 @@ func main() {
 	scanner.Scan()
 	numExpressions, _ := strconv.Atoi(scanner.Text())
 
+	fmt.Println("--------------------------------")
+
 	// Pro každý výraz zavoláme funkci evaluateExpression
 	for i := 0; i < numExpressions; i++ {
 		fmt.Print("Enter expression: ")
@@ -307,9 +309,10 @@ func main() {
 		expression := scanner.Text()
 		result, err := evaluateExpression(expression)
 		if err != nil {
-			fmt.Println("ERROR")
+			fmt.Println("ERROR", err.Error())
 		} else {
 			fmt.Println(result)
 		}
+		fmt.Println("--------------------------------")
 	}
 }
