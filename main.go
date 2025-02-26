@@ -118,35 +118,61 @@ func (l *Lexer) getNextToken() Token {
 
 // Parser je zodpovědný za analýzu tokenů a výpočet výrazu.
 type Parser struct {
-	lexer *Lexer // Lexer pro získání tokenů
-	token Token  // Aktuálně zpracovávaný token
+	lexer        *Lexer // Lexer pro získání tokenů
+	token        Token  // Aktuálně zpracovávaný token
+	parenBalance int    // Počítadlo závorek pro kontrolu správného vnoření
 }
 
 // Vytvoříme nový parser s lexerem
 func NewParser(lexer *Lexer) *Parser {
-	return &Parser{lexer: lexer, token: lexer.getNextToken()} // Vrátíme pointer na nový parser, který má lexer a aktuální token
+	return &Parser{
+		lexer:        lexer,
+		token:        lexer.getNextToken(),
+		parenBalance: 0, // Inicializujeme počítadlo závorek na nulu
+	}
 }
 
 // metoda eat zkontroluje, zda aktuální token odpovídá očekávanému typu, a pak do aktuálního tokenu uloží další token
 func (p *Parser) eat(tokenType string) bool {
 	if p.token.Type == tokenType {
+		// Sledujeme počet závorek pro kontrolu vyváženosti
+		if tokenType == LPAREN {
+			p.parenBalance++
+		} else if tokenType == RPAREN {
+			p.parenBalance--
+			// Pokud počet zavíracích závorek převýší počet otevíracích, máme nevyváženost
+			if p.parenBalance < 0 {
+				return false
+			}
+		}
+
 		p.token = p.lexer.getNextToken()
 		return true
 	}
+
+	// Speciální kontrola pro nevyváženou pravou závorku
+	if tokenType == RPAREN && p.parenBalance < 0 {
+		return false
+	}
+
 	return false
 }
 
 // metoda parseFactor vrátí číslo, nebo vstoupí do závorek a zavolá parseExpression, která zpracuje výraz uvnitř závorek
 // Závorky mají nejvyšší prioritu
 func (p *Parser) parseFactor() (int, error) {
-
 	if p.token.Type == NUMBER { // Pokud je aktuální token číslo
 		value, _ := strconv.Atoi(p.token.Value) // Převedeme ho na číslo (je to typ string)
 		p.eat(NUMBER)                           // Ověříme, že je to číslo a posuneme se na další token
 
+		// Zkontrolujeme, jestli po čísle nenásleduje závorka bez operátoru (jako v 2+5*7(2+5))
+		if p.token.Type == LPAREN {
+			return 0, fmt.Errorf("missing operator before parenthesis")
+		}
+
 		return value, nil // Vrátíme číslo
 	} else if p.token.Type == LPAREN { // Pokud je aktuální token otevírací závorka
-		p.eat(LPAREN)                      // Posuneme se na další token
+		p.eat(LPAREN)                      // Posuneme se na další token a zvýšíme počítadlo závorek
 		result, err := p.parseExpression() // Zpracujeme výraz uvnitř závorek
 
 		if err != nil {
@@ -157,8 +183,17 @@ func (p *Parser) parseFactor() (int, error) {
 			return 0, fmt.Errorf("missing closing parenthesis")
 		}
 
+		// Zkontrolujeme, jestli po závorce nenásleduje závorka bez operátoru
+		if p.token.Type == LPAREN {
+			return 0, fmt.Errorf("missing operator before parenthesis")
+		}
+
 		return result, nil
+	} else if p.token.Type == RPAREN { // Pokud narazíme na nečekanou zavírací závorku
+		// Toto odchytí případ, kdy je pravá závorka bez odpovídající levé závorky
+		return 0, fmt.Errorf("unexpected closing parenthesis")
 	}
+
 	return 0, fmt.Errorf("invalid syntax")
 }
 
@@ -220,6 +255,12 @@ func (p *Parser) parseExpression() (int, error) {
 			result -= nextValue
 		}
 	}
+
+	// Kontrola nevyvážených závorek na konci výrazu
+	if p.token.Type == RPAREN && p.parenBalance < 0 {
+		return 0, fmt.Errorf("unexpected closing parenthesis")
+	}
+
 	return result, nil
 }
 
@@ -227,7 +268,29 @@ func (p *Parser) parseExpression() (int, error) {
 func evaluateExpression(expression string) (int, error) {
 	lexer := NewLexer(expression)
 	parser := NewParser(lexer)
-	return parser.parseExpression()
+	result, err := parser.parseExpression()
+
+	// Dodatečná kontrola po dokončení analýzy výrazu
+	if err == nil {
+		// Kontrola nevyváženosti závorek
+		if parser.parenBalance != 0 {
+			if parser.parenBalance > 0 {
+				return 0, fmt.Errorf("missing closing parenthesis")
+			} else {
+				return 0, fmt.Errorf("unexpected closing parenthesis")
+			}
+		}
+
+		// Kontrola neočekávaných tokenů na konci
+		if parser.token.Type != END {
+			if parser.token.Type == RPAREN {
+				return 0, fmt.Errorf("unexpected closing parenthesis")
+			}
+			return 0, fmt.Errorf("invalid syntax")
+		}
+	}
+
+	return result, err
 }
 
 func main() {
